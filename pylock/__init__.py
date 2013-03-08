@@ -1,7 +1,7 @@
 import logging
 import urlparse
 
-from .backends import OpenLock, RedisLock, LockTimeout
+from .backends import OpenLock, RedisLock
 
 BACKEND = 'redis://'
 DEFAULT_TIMEOUT = 60
