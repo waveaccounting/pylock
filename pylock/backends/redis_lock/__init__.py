@@ -1,56 +1,19 @@
 import time
+
 from redis import StrictRedis
 
-
-class LockTimeout(BaseException):
-    """Raised in the event a timeout occurs while waiting for a lock"""
-
-
-class BaseLock(object):
-    def __init__(self, key, expires, timeout, client):
-        """
-        :param  client:      The the backend client instance to use.
-
-        """
-        self.key = key
-        self.expires = expires
-        self.timeout = timeout
-        self.client = client
-
-    @classmethod
-    def get_client(cls, **connection_args):
-        raise NotImplementedError
-
-    def acquire(self):
-        raise NotImplementedError
-
-    def release(self):
-        raise NotImplementedError
-
-
-class OpenLock(BaseLock):
-    NAME = 'open'
-
-    @classmethod
-    def get_client(cls, **connection_args):
-        return None
-
-    def acquire(self):
-        return True
-
-    def release(self):
-        return True
+from .. import BaseLock, LockTimeout
 
 
 class RedisLock(BaseLock):
-    NAME = 'redis'
+    url_scheme = 'redis'
 
     @classmethod
     def get_client(cls, **connection_args):
-        host = connection_args.get('host', 'localhost')
-        port = connection_args.get('port', 6379)
+        host = connection_args.get('host') or 'localhost'
+        port = connection_args.get('port') or 6379
         password = connection_args.get('password')
-        db = connection_args.get('db', 0)
+        db = connection_args.get('db') or 0
         return StrictRedis(host, port, db, password)
 
     def __init__(self, key, expires, timeout, client):

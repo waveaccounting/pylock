@@ -12,7 +12,7 @@ from mock import patch
 class TestRedisLock(unittest.TestCase):
     def _makeOne(self):
         from pylock import DEFAULT_EXPIRES, DEFAULT_TIMEOUT
-        from pylock.backends import RedisLock
+        from pylock.backends.redis_lock import RedisLock
 
         # wrap the RedisLock backend in a context manager to be able to test it
         class Lock(RedisLock):
@@ -149,3 +149,23 @@ class TestRedisLock(unittest.TestCase):
                 array.append(4)  # pragma: nocover
         test_it()
         eq_(len(array), 0)
+
+    def test_get_client(self):
+        from pylock.backends.redis_lock import RedisLock
+        db = 4
+        host = '33.33.33.10'
+        port = '1234'
+        password = 'cookies'
+        with patch('pylock.backends.redis_lock.StrictRedis') as mock_redis:
+            RedisLock.get_client(db=db, host=host, port=port, password=password)
+            mock_redis.assert_called_once_with(host, port, db, password)
+
+    def test_get_client_default_connection_values(self):
+        from pylock.backends.redis_lock import RedisLock
+        db = None
+        host = None
+        port = None
+        password = None
+        with patch('pylock.backends.redis_lock.StrictRedis') as mock_redis:
+            RedisLock.get_client(db=db, host=host, port=port, password=password)
+            mock_redis.assert_called_once_with('localhost', 6379, 0, None)

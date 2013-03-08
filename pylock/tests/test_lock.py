@@ -3,7 +3,8 @@ import unittest
 from nose.tools import eq_
 from mock import Mock
 
-from pylock.backends import OpenLock, RedisLock
+from pylock.backends.open_lock import OpenLock
+from pylock.backends.redis_lock import RedisLock
 
 
 class TestLock(unittest.TestCase):
@@ -17,19 +18,19 @@ class TestLock(unittest.TestCase):
 
     def test_open_backend_is_properly_detected(self):
         import pylock
-        pylock.BACKEND = 'open://'
+        pylock.BACKEND = {'class': 'pylock.backends.open_lock.OpenLock', 'connection': 'open://'}
         lock = pylock.Lock('somekey')
         self.assertEqual(lock._lock.__class__, OpenLock)
 
     def test_redis_backend_is_properly_detected(self):
         import pylock
-        pylock.BACKEND = 'redis://'
+        pylock.BACKEND = {'class': 'pylock.backends.redis_lock.RedisLock', 'connection': 'redis://'}
         lock = pylock.Lock('somekey')
         self.assertEqual(lock._lock.__class__, RedisLock)
 
     def test_default_values_are_used(self):
         import pylock
-        pylock.BACKEND = 'open://'
+        pylock.BACKEND = {'class': 'pylock.backends.open_lock.OpenLock', 'connection': 'open://'}
         pylock.DEFAULT_EXPIRES = 999
         pylock.DEFAULT_TIMEOUT = 888
         pylock.KEY_PREFIX = 'cookies-are-us-'

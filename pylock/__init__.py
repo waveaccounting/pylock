@@ -1,13 +1,16 @@
+from importlib import import_module
 import logging
 import urlparse
 
-from .backends import OpenLock, RedisLock
+from .backends import LockTimeout
 
-BACKEND = 'redis://'
 DEFAULT_TIMEOUT = 60
 DEFAULT_EXPIRES = 10
 KEY_PREFIX = 'pylock:'
-BACKEND_CLASSES = [OpenLock, RedisLock]
+BACKEND = {
+    'class': 'pylock.backends.redis_lock.RedisLock',
+    'connection': 'redis://'
+}
 
 
 logger = logging.getLogger('pylock')
@@ -33,21 +36,16 @@ class Lock(object):
                         right away).
 
     """
-    def __init__(self, key, expires=None, timeout=None, backend=None):
-        if backend is None:
-            backend = BACKEND
+    def __init__(self, key, expires=None, timeout=None):
         if expires is None:
             expires = DEFAULT_EXPIRES
         if timeout is None:
             timeout = DEFAULT_TIMEOUT
-        # Figure out which lock backend to use (default to OpenLock)
-        backend_class = BACKEND_CLASSES[0]
-        for backend_class in BACKEND_CLASSES:
-            if backend.startswith(backend_class.NAME):
-                break
-        logger.info("Using {0} lock backend".format(backend_class.NAME))
+        # Load backend class
+        backend_class = get_backend_class(BACKEND['class'])
+        logger.info("Using {0} lock backend".format(backend_class.__name__))
         key = "{0}{1}".format(KEY_PREFIX, key)
-        connection_info = parse(backend)
+        connection_info = parse(BACKEND['connection'], url_scheme=backend_class.url_scheme)
         client = backend_class.get_client(**connection_info)
         self._lock = backend_class(key, expires, timeout, client)
 
@@ -58,11 +56,30 @@ class Lock(object):
         self._lock.release()
 
 
-def parse(url):
+class ImproperlyConfigured(Exception):
+    pass
+
+
+def get_backend_class(import_path):
+    try:
+        dot = import_path.rindex('.')
+    except ValueError:
+        raise ImproperlyConfigured("%s isn't a pylock backend module." % import_path)
+    module, classname = import_path[:dot], import_path[dot+1:]
+    try:
+        mod = import_module(module)
+    except ImportError, e:
+        raise ImproperlyConfigured('Error importing pylock backend module %s: "%s"' % (module, e))
+    try:
+        return getattr(mod, classname)
+    except AttributeError:
+        raise ImproperlyConfigured('Pyloc backend module "%s" does not define a "%s" class.' % (module, classname))        
+
+
+def parse(url, url_scheme):
     """Parses a distributed lock backend URL."""
     # Register extra schemes in URLs.
-    for backend in BACKEND_CLASSES:
-        urlparse.uses_netloc.append(backend.NAME)
+    urlparse.uses_netloc.append(url_scheme)
 
     url = urlparse.urlparse(url)
 
