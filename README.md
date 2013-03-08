@@ -1,3 +1,12 @@
+## Usage
+
+```
+from pylock import Lock
+
+with Lock('a_key', expires=60, timeout=10):
+    # do something that should only be done one at a time
+```
+
 ## Configuration
 
 ### Backends
@@ -45,8 +54,8 @@ For `Lock('somekey')`, the generated key will be `'pylock:somekey'`
 
 ### Redis backend
 
-The redis backend is almost an exact copy of [`retools.lock`](https://github.com/bbangert/retools/blob/master/retools/lock.py)
-which is based on the following [implementation](https://chris-lamb.co.uk/posts/distributing-locking-python-and-redis)
+The redis backend is almost an exact copy of Ben Bangert's [`retools.lock`](https://github.com/bbangert/retools/blob/master/retools/lock.py)
+which is based on [Chris Lamb's example](https://chris-lamb.co.uk/posts/distributing-locking-python-and-redis)
 
 
 ### Memcache backend
