@@ -10,27 +10,27 @@ from pylock.backends.redis_lock import RedisLock
 class TestLock(unittest.TestCase):
     def setUp(self):
         import pylock
-        self.current_settings = (pylock.BACKEND, pylock.DEFAULT_EXPIRES, pylock.DEFAULT_TIMEOUT, pylock.KEY_PREFIX)
+        self.current_settings = (pylock.DEFAULT_BACKEND, pylock.DEFAULT_EXPIRES, pylock.DEFAULT_TIMEOUT, pylock.KEY_PREFIX)
 
     def tearDown(self):
         import pylock
-        (pylock.BACKEND, pylock.DEFAULT_EXPIRES, pylock.DEFAULT_TIMEOUT, pylock.KEY_PREFIX) = self.current_settings
+        (pylock.DEFAULT_BACKEND, pylock.DEFAULT_EXPIRES, pylock.DEFAULT_TIMEOUT, pylock.KEY_PREFIX) = self.current_settings
 
     def test_open_backend_is_properly_detected(self):
         import pylock
-        pylock.BACKEND = {'class': 'pylock.backends.open_lock.OpenLock', 'connection': 'open://'}
+        pylock.DEFAULT_BACKEND = {'class': 'pylock.backends.open_lock.OpenLock', 'connection': 'open://'}
         lock = pylock.Lock('somekey')
         self.assertEqual(lock._lock.__class__, OpenLock)
 
     def test_redis_backend_is_properly_detected(self):
         import pylock
-        pylock.BACKEND = {'class': 'pylock.backends.redis_lock.RedisLock', 'connection': 'redis://'}
+        pylock.DEFAULT_BACKEND = {'class': 'pylock.backends.redis_lock.RedisLock', 'connection': 'redis://'}
         lock = pylock.Lock('somekey')
         self.assertEqual(lock._lock.__class__, RedisLock)
 
     def test_default_values_are_used(self):
         import pylock
-        pylock.BACKEND = {'class': 'pylock.backends.open_lock.OpenLock', 'connection': 'open://'}
+        pylock.DEFAULT_BACKEND = {'class': 'pylock.backends.open_lock.OpenLock', 'connection': 'open://'}
         pylock.DEFAULT_EXPIRES = 999
         pylock.DEFAULT_TIMEOUT = 888
         pylock.KEY_PREFIX = 'cookies-are-us-'
