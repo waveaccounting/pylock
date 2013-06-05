@@ -7,7 +7,7 @@ from .backends import LockTimeout
 DEFAULT_TIMEOUT = 60
 DEFAULT_EXPIRES = 10
 KEY_PREFIX = 'pylock:'
-BACKEND = {
+DEFAULT_BACKEND = {
     'class': 'pylock.backends.redis_lock.RedisLock',
     'connection': 'redis://'
 }
@@ -36,16 +36,20 @@ class Lock(object):
                         right away).
 
     """
-    def __init__(self, key, expires=None, timeout=None):
+    def __init__(self, key, expires=None, timeout=None, backend_class_path=None, backend_connection=None):
         if expires is None:
             expires = DEFAULT_EXPIRES
         if timeout is None:
             timeout = DEFAULT_TIMEOUT
+        if backend_class_path is None:
+            backend_class_path = DEFAULT_BACKEND['class']
+        if backend_connection is None:
+            backend_connection = DEFAULT_BACKEND['connection']
         # Load backend class
-        backend_class = get_backend_class(BACKEND['class'])
+        backend_class = get_backend_class(backend_class_path)
         logger.info("Using {0} lock backend".format(backend_class.__name__))
         key = "{0}{1}".format(KEY_PREFIX, key)
-        connection_info = parse(BACKEND['connection'], url_scheme=backend_class.url_scheme)
+        connection_info = parse(backend_connection, url_scheme=backend_class.url_scheme)
         client = backend_class.get_client(**connection_info)
         self._lock = backend_class(key, expires, timeout, client)
 
@@ -73,7 +77,7 @@ def get_backend_class(import_path):
     try:
         return getattr(mod, classname)
     except AttributeError:
-        raise ImproperlyConfigured('Pyloc backend module "%s" does not define a "%s" class.' % (module, classname))        
+        raise ImproperlyConfigured('Pylock backend module "%s" does not define a "%s" class.' % (module, classname))
 
 
 def parse(url, url_scheme):
