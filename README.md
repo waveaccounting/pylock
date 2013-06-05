@@ -15,19 +15,28 @@ There are three available backends:
 
 
 #### Open (non-locking) backend
-`BACKEND = 'open://'`
+```
+DEFAULT_BACKEND = {
+    'class': 'pylock.backends.open_lock.OpenLock',
+    'connection': 'open://'
+}
+```
 
 **Warning** This backend is not a real lock since it can always be acquired even if another instance has acquired it
 already. It is meant to be used for testing when you don't want to depend on a running redis or memcache instance and
 don't care about the lock working.
 
 #### Redis backend
-`BACKEND = 'redis://:password@host:port/db'`
+```
+DEFAULT_BACKEND = {
+    'class': 'pylock.backends.redis_lock.RedisLock',
+    'connection': 'redis://'
+}
+```
 
 Note: all fields after the scheme are optional, and will default to localhost on port 6379, using database 0.
 
-#### Memcache backend
-`BACKEND = 'memcached://host:port/'`
+#### Memcache backend (coming soon)
 
 ### `DEFAULT_TIMEOUT` (default: 60)
 
@@ -58,7 +67,7 @@ The redis backend is almost an exact copy of Ben Bangert's [`retools.lock`](http
 which is based on [Chris Lamb's example](https://chris-lamb.co.uk/posts/distributing-locking-python-and-redis)
 
 
-### Memcache backend
+### Memcache backend (coming soon)
 
 The memcache backend is inspired by the following:
  - https://github.com/snbuback/DistributedLock
