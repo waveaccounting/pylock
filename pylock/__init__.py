@@ -1,6 +1,10 @@
 from importlib import import_module
 import logging
-import urlparse
+try:
+    import urlparse
+except ImportError:
+    from urllib import parse as urlparse  # Python 3
+
 
 from .backends import LockTimeout
 
@@ -72,7 +76,7 @@ def get_backend_class(import_path):
     module, classname = import_path[:dot], import_path[dot+1:]
     try:
         mod = import_module(module)
-    except ImportError, e:
+    except ImportError as e:
         raise ImproperlyConfigured('Error importing pylock backend module %s: "%s"' % (module, e))
     try:
         return getattr(mod, classname)
