@@ -1,6 +1,10 @@
 from importlib import import_module
 import logging
-import urlparse
+try:
+    import urlparse
+except ImportError:
+    from urllib import parse as urlparse  # Python 3
+
 
 from .backends import LockTimeout
 
