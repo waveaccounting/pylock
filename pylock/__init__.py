@@ -1,8 +1,8 @@
 from importlib import import_module
 import logging
-import urlparse
+from six.moves.urllib import parse
 
-from .backends import LockTimeout
+from .backends import LockTimeout  # noqa
 
 DEFAULT_TIMEOUT = 60
 DEFAULT_EXPIRES = 10
@@ -36,6 +36,7 @@ class Lock(object):
                         right away).
 
     """
+
     def __init__(self, key, expires=None, timeout=None, backend_class_path=None, backend_connection=None):
         if expires is None:
             expires = DEFAULT_EXPIRES
@@ -49,7 +50,7 @@ class Lock(object):
         backend_class = get_backend_class(backend_class_path)
         logger.info("Using {0} lock backend".format(backend_class.__name__))
         key = "{0}{1}".format(KEY_PREFIX, key)
-        connection_info = parse(backend_connection, url_scheme=backend_class.url_scheme)
+        connection_info = parse_url(backend_connection, url_scheme=backend_class.url_scheme)
         client = backend_class.get_client(**connection_info)
         self._lock = backend_class(key, expires, timeout, client)
 
@@ -69,10 +70,10 @@ def get_backend_class(import_path):
         dot = import_path.rindex('.')
     except ValueError:
         raise ImproperlyConfigured("%s isn't a pylock backend module." % import_path)
-    module, classname = import_path[:dot], import_path[dot+1:]
+    module, classname = import_path[:dot], import_path[dot + 1:]
     try:
         mod = import_module(module)
-    except ImportError, e:
+    except ImportError as e:
         raise ImproperlyConfigured('Error importing pylock backend module %s: "%s"' % (module, e))
     try:
         return getattr(mod, classname)
@@ -80,12 +81,12 @@ def get_backend_class(import_path):
         raise ImproperlyConfigured('Pylock backend module "%s" does not define a "%s" class.' % (module, classname))
 
 
-def parse(url, url_scheme):
+def parse_url(url, url_scheme):
     """Parses a distributed lock backend URL."""
     # Register extra schemes in URLs.
-    urlparse.uses_netloc.append(url_scheme)
+    parse.uses_netloc.append(url_scheme)
 
-    url = urlparse.urlparse(url)
+    url = parse.urlparse(url)
 
     # Remove query strings.
     path = url.path[1:]
