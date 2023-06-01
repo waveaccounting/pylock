@@ -179,3 +179,13 @@ class TestRedisLock(unittest.TestCase):
         with patch('pylock.backends.redis_lock.StrictRedis') as mock_redis:
             RedisLock.get_client(db=db, host=host, port=port, password=password, ssl=True)
             mock_redis.assert_called_once_with("wave.redis.com", 4999, 3, "blarg", ssl=True)
+
+    def test_parse_url_rediss(self):
+        import pylock
+        from pylock.backends.redis_lock import RedisLock
+        url = 'rediss://master.cetus-coastguard-encrypted.f3jxme.use1.cache.amazonaws.com:6379/0/?ssl_cert_reqs=CERT_NONE'
+        connection = pylock.parse_url(url, RedisLock.url_schemes)
+        self.assertEqual(connection['db'], '0')
+        self.assertEqual(connection['host'], 'master.cetus-coastguard-encrypted.f3jxme.use1.cache.amazonaws.com')
+        self.assertEqual(connection['port'], 6379)
+        self.assertEqual(connection['scheme'], 'rediss')

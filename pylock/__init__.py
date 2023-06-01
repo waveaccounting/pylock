@@ -92,6 +92,7 @@ def parse_url(url, url_schemes):
     # Remove query strings.
     path = url.path[1:]
     path = path.split('?', 2)[0]
+    path = path.split('/', 2)[0]
     ssl = True if url.scheme == "rediss" else False
 
     # Update with environment configuration.
