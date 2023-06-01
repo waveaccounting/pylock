@@ -6,7 +6,7 @@ from .. import BaseLock, LockTimeout
 
 
 class RedisLock(BaseLock):
-    url_scheme = 'redis'
+    url_schemes = ['redis','rediss']
 
     @classmethod
     def get_client(cls, **connection_args):
@@ -14,7 +14,8 @@ class RedisLock(BaseLock):
         port = connection_args.get('port') or 6379
         password = connection_args.get('password')
         db = connection_args.get('db') or 0
-        return StrictRedis(host, port, db, password)
+        ssl = connection_args.get('ssl') or False
+        return StrictRedis(host, port, db, password, ssl=ssl)
 
     def __init__(self, key, expires, timeout, client):
         super(RedisLock, self).__init__(key, expires, timeout, client)

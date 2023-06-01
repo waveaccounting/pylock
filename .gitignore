@@ -40,3 +40,5 @@ nosetests.xml
 # PyCharm
 .idea
 
+.python-version
+.vscode

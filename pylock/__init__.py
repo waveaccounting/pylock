@@ -50,7 +50,7 @@ class Lock(object):
         backend_class = get_backend_class(backend_class_path)
         logger.info("Using {0} lock backend".format(backend_class.__name__))
         key = "{0}{1}".format(KEY_PREFIX, key)
-        connection_info = parse_url(backend_connection, url_scheme=backend_class.url_scheme)
+        connection_info = parse_url(backend_connection, url_schemes=backend_class.url_schemes)
         client = backend_class.get_client(**connection_info)
         self._lock = backend_class(key, expires, timeout, client)
 
@@ -81,16 +81,19 @@ def get_backend_class(import_path):
         raise ImproperlyConfigured('Pylock backend module "%s" does not define a "%s" class.' % (module, classname))
 
 
-def parse_url(url, url_scheme):
+def parse_url(url, url_schemes):
     """Parses a distributed lock backend URL."""
     # Register extra schemes in URLs.
-    parse.uses_netloc.append(url_scheme)
+    for scheme in url_schemes:
+        parse.uses_netloc.append(scheme)
 
     url = parse.urlparse(url)
 
     # Remove query strings.
     path = url.path[1:]
     path = path.split('?', 2)[0]
+    path = path.split('/', 2)[0]
+    ssl = True if url.scheme == "rediss" else False
 
     # Update with environment configuration.
     connection_info = {
@@ -98,7 +101,9 @@ def parse_url(url, url_scheme):
         'user': url.username,
         'password': url.password,
         'host': url.hostname,
-        'port': url.port
+        'port': url.port,
+        'scheme': url.scheme,
+        'ssl': ssl
     }
 
     return connection_info

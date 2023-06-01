@@ -92,4 +92,16 @@ http://jbq.caraldi.com/2010/08/simple-distributed-lock-with-memcached.html
 -
 http://www.regexprn.com/2010/05/using-memcached-as-distributed-locking.html
 
-TODO: - better handle redis/memcache connection issues
+
+
+Notes related to the 0.4 release
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Added a poetry lock file, but did not setup circleci builds
+To build and publish a release:
+poetry publish -r gemfury -u $GEMFURY_PUSH_TOKEN -p NOPASS --build 
+
+For testing I would suggest that you build and publish patch releases till it works in your app THEN publish a minor or major version
+because if you republish multiple builds at the same version it is very difficult to get your app to install the new ones.
+
+Poetry builds do not include test code the way that setup.py builds did.

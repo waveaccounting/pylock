@@ -2,7 +2,7 @@ from .. import BaseLock
 
 
 class OpenLock(BaseLock):
-    url_scheme = 'open'
+    url_schemes = ['open']
 
     @classmethod
     def get_client(cls, **connection_args):
