@@ -2,7 +2,7 @@ import os
 
 from setuptools import setup, find_packages
 
-__version__ = '0.3'
+__version__ = '0.4'
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
@@ -16,7 +16,7 @@ setup(
         "Intended Audience :: Developers",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.7",
     ],
     keywords='lock redis',
     author="Nathan Duthoit",
@@ -29,6 +29,6 @@ setup(
     zip_safe=False,
     tests_require=['Mock>=2.0.0', 'nose'],
     install_requires=[
-        "redis>=2.6.1",
+        "redis>4.0.0",
     ]
 )

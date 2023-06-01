@@ -158,7 +158,7 @@ class TestRedisLock(unittest.TestCase):
         password = 'cookies'
         with patch('pylock.backends.redis_lock.StrictRedis') as mock_redis:
             RedisLock.get_client(db=db, host=host, port=port, password=password)
-            mock_redis.assert_called_once_with(host, port, db, password)
+            mock_redis.assert_called_once_with(host, port, db, password, ssl=False)
 
     def test_get_client_default_connection_values(self):
         from pylock.backends.redis_lock import RedisLock
@@ -168,4 +168,14 @@ class TestRedisLock(unittest.TestCase):
         password = None
         with patch('pylock.backends.redis_lock.StrictRedis') as mock_redis:
             RedisLock.get_client(db=db, host=host, port=port, password=password)
-            mock_redis.assert_called_once_with('localhost', 6379, 0, None)
+            mock_redis.assert_called_once_with('localhost', 6379, 0, None, ssl=False)
+
+    def test_get_client_ssl_connection_values(self):
+        from pylock.backends.redis_lock import RedisLock
+        db = 3
+        host = "wave.redis.com"
+        port = 4999
+        password = "blarg"
+        with patch('pylock.backends.redis_lock.StrictRedis') as mock_redis:
+            RedisLock.get_client(db=db, host=host, port=port, password=password, ssl=True)
+            mock_redis.assert_called_once_with("wave.redis.com", 4999, 3, "blarg", ssl=True)
