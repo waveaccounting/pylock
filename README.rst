@@ -101,7 +101,7 @@ Added a poetry lock file, but did not setup circleci builds
 To build and publish a release:
 poetry publish -r gemfury -u $GEMFURY_PUSH_TOKEN -p NOPASS --build 
 
-I would suggest that if you are testing that your build patch releases till it works in your app THEN publish a minor or major version
+For testing I would suggest that you build and publish patch releases till it works in your app THEN publish a minor or major version
 because if you republish multiple builds at the same version it is very difficult to get your app to install the new ones.
 
 Poetry builds do not include test code the way that setup.py builds did.
