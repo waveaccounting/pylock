@@ -1,21 +1,31 @@
 import time
 
 from redis import StrictRedis
+from redis.backoff import ExponentialBackoff
+from redis.retry import Retry
 
 from .. import BaseLock, LockTimeout
 
 
 class RedisLock(BaseLock):
-    url_schemes = ['redis','rediss']
+    url_schemes = ['redis', 'rediss']
+
+    connection = None
 
     @classmethod
     def get_client(cls, **connection_args):
-        host = connection_args.get('host') or 'localhost'
-        port = connection_args.get('port') or 6379
-        password = connection_args.get('password')
-        db = connection_args.get('db') or 0
-        ssl = connection_args.get('ssl') or False
-        return StrictRedis(host, port, db, password, ssl=ssl)
+        if not cls.connection:
+            host = connection_args.get('host') or 'localhost'
+            port = connection_args.get('port') or 6379
+            password = connection_args.get('password')
+            db = connection_args.get('db') or 0
+            ssl = connection_args.get('ssl') or False
+            retry = Retry(ExponentialBackoff(cap=10, base=1), 25)
+            errors_to_retry = [ConnectionError, TimeoutError, ConnectionResetError]
+            cls.connection = StrictRedis(host, port, db, password, ssl=ssl, retry=retry,
+                                         retry_on_error=errors_to_retry, health_check_interval=20)
+
+        return cls.connection
 
     def __init__(self, key, expires, timeout, client):
         super(RedisLock, self).__init__(key, expires, timeout, client)
