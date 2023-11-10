@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pylock"
-version = "1.0.0"
+version = "1.0.0-dev"
 description = "Distributed lock implementation based on memcache and redis"
 authors = ["Wave Developer Ops <devops@waveapps.com>"]
 
