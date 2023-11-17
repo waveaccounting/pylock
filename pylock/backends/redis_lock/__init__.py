@@ -1,3 +1,4 @@
+import logging
 import time
 
 from redis import StrictRedis
@@ -5,6 +6,8 @@ from redis.backoff import ExponentialBackoff
 from redis.retry import Retry
 
 from .. import BaseLock, LockTimeout
+
+logger = logging.getLogger("pylock")
 
 
 class RedisLock(BaseLock):
@@ -24,6 +27,7 @@ class RedisLock(BaseLock):
             errors_to_retry = [ConnectionError, TimeoutError, ConnectionResetError]
             cls.connection = StrictRedis(host, port, db, password, ssl=ssl, retry=retry,
                                          retry_on_error=errors_to_retry, health_check_interval=20)
+            logger.info("redis connection successfully created for pylock")
 
         return cls.connection
 
