@@ -11,6 +11,8 @@ DEFAULT_BACKEND = {
     'class': 'pylock.backends.redis_lock.RedisLock',
     'connection': 'redis://'
 }
+USE_DJANGO_REDIS_CACHE = False
+DJANGO_REDIS_CACHE_NAME = "default"
 
 
 logger = logging.getLogger('pylock')
@@ -48,7 +50,7 @@ class Lock(object):
             backend_connection = DEFAULT_BACKEND['connection']
         # Load backend class
         backend_class = get_backend_class(backend_class_path)
-        logger.info("Using {0} lock backend".format(backend_class.__name__))
+        logger.debug("Using {0} lock backend".format(backend_class.__name__))
         key = "{0}{1}".format(KEY_PREFIX, key)
         connection_info = parse_url(backend_connection, url_schemes=backend_class.url_schemes)
         client = backend_class.get_client(**connection_info)

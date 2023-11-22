@@ -1,5 +1,6 @@
 import unittest
 import time
+from unittest.mock import ANY
 
 import redis
 
@@ -10,6 +11,15 @@ from mock import patch
 
 
 class TestRedisLock(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.retry = ANY  # Retry(ExponentialBackoff(cap=10, base=1), 25)
+        self.errors_to_retry = [ANY, ANY, ANY]  # errors_to_retry = [ConnectionError, TimeoutError, ConnectionResetError]
+
+    def tearDown(self) -> None:
+        from pylock.backends.redis_lock import RedisLock
+        RedisLock.connection = None
+
     def _makeOne(self):
         from pylock import DEFAULT_EXPIRES, DEFAULT_TIMEOUT
         from pylock.backends.redis_lock import RedisLock
@@ -24,6 +34,7 @@ class TestRedisLock(unittest.TestCase):
 
             def __exit__(self, exc_type, exc_val, exc_tb):
                 self.release()
+
         return Lock
 
     def _lockException(self):
@@ -37,6 +48,7 @@ class TestRedisLock(unittest.TestCase):
             lock = self._makeOne()
             with lock('somekey', client=mock_redis):
                 val = 2 + 4
+
         test_it()
         method_names = [x[0] for x in mock_redis.method_calls]
         eq_(method_names[0], 'setnx')
@@ -51,6 +63,7 @@ class TestRedisLock(unittest.TestCase):
             lock = self._makeOne()
             with lock('somekey', client=mock_redis):
                 val = 2 + 4
+
         test_it()
         method_names = [x[0] for x in mock_redis.method_calls]
         eq_(method_names[0], 'setnx')
@@ -69,6 +82,7 @@ class TestRedisLock(unittest.TestCase):
             lock = self._makeOne()
             with lock('somekey', expires=30, client=mock_redis):
                 val = 2 + 4
+
         test_it()
         method_names = [x[0] for x in mock_redis.method_calls]
         eq_(method_names[0], 'setnx')
@@ -90,6 +104,7 @@ class TestRedisLock(unittest.TestCase):
             lock = self._makeOne()
             with lock('somekey', expires=30, timeout=0, client=mock_redis):  # pragma: nocover
                 val = 2 + 4
+
         test_it()
         method_names = [x[0] for x in mock_redis.method_calls]
         eq_(method_names[0], 'setnx')
@@ -105,6 +120,7 @@ class TestRedisLock(unittest.TestCase):
             lock = self._makeOne()
             with lock('somekey', client=mock_redis):
                 val = 2 + 4
+
         test_it()
         eq_(len(mock_redis.method_calls), 5)
         setnx, get = mock_redis.method_calls[:2]
@@ -127,6 +143,7 @@ class TestRedisLock(unittest.TestCase):
             lock = self._makeOne()
             with lock('somekey', timeout=1, client=mock_redis):
                 array.append(4)  # pragma: nocover
+
         test_it()
         eq_(len(array), 0)
 
@@ -147,6 +164,7 @@ class TestRedisLock(unittest.TestCase):
             lock = self._makeOne()
             with lock('somekey', timeout=1, client=mock_redis):
                 array.append(4)  # pragma: nocover
+
         test_it()
         eq_(len(array), 0)
 
@@ -158,7 +176,9 @@ class TestRedisLock(unittest.TestCase):
         password = 'cookies'
         with patch('pylock.backends.redis_lock.StrictRedis') as mock_redis:
             RedisLock.get_client(db=db, host=host, port=port, password=password)
-            mock_redis.assert_called_once_with(host, port, db, password, ssl=False)
+            print(mock_redis.__dict__)
+            mock_redis.assert_called_once_with(host, port, db, password, ssl=False, retry=self.retry,
+                                               retry_on_error=self.errors_to_retry, health_check_interval=20)
 
     def test_get_client_default_connection_values(self):
         from pylock.backends.redis_lock import RedisLock
@@ -168,7 +188,8 @@ class TestRedisLock(unittest.TestCase):
         password = None
         with patch('pylock.backends.redis_lock.StrictRedis') as mock_redis:
             RedisLock.get_client(db=db, host=host, port=port, password=password)
-            mock_redis.assert_called_once_with('localhost', 6379, 0, None, ssl=False)
+            mock_redis.assert_called_once_with('localhost', 6379, 0, None, ssl=False, retry=self.retry,
+                                               retry_on_error=self.errors_to_retry, health_check_interval=20)
 
     def test_get_client_ssl_connection_values(self):
         from pylock.backends.redis_lock import RedisLock
@@ -178,7 +199,8 @@ class TestRedisLock(unittest.TestCase):
         password = "blarg"
         with patch('pylock.backends.redis_lock.StrictRedis') as mock_redis:
             RedisLock.get_client(db=db, host=host, port=port, password=password, ssl=True)
-            mock_redis.assert_called_once_with("wave.redis.com", 4999, 3, "blarg", ssl=True)
+            mock_redis.assert_called_once_with("wave.redis.com", 4999, 3, "blarg", ssl=True, retry=self.retry,
+                                               retry_on_error=self.errors_to_retry, health_check_interval=20)
 
     def test_parse_url_rediss(self):
         import pylock

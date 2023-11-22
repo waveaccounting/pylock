@@ -1,21 +1,47 @@
+import logging
 import time
 
 from redis import StrictRedis
+from redis.backoff import ExponentialBackoff
+from redis.retry import Retry
+
+from importlib import import_module, util as import_util
 
 from .. import BaseLock, LockTimeout
 
+logger = logging.getLogger("pylock")
+
 
 class RedisLock(BaseLock):
-    url_schemes = ['redis','rediss']
+    url_schemes = ['redis', 'rediss']
+
+    connection = None
 
     @classmethod
     def get_client(cls, **connection_args):
-        host = connection_args.get('host') or 'localhost'
-        port = connection_args.get('port') or 6379
-        password = connection_args.get('password')
-        db = connection_args.get('db') or 0
-        ssl = connection_args.get('ssl') or False
-        return StrictRedis(host, port, db, password, ssl=ssl)
+        from pylock import DJANGO_REDIS_CACHE_NAME, USE_DJANGO_REDIS_CACHE
+
+        if not cls.connection:
+            if USE_DJANGO_REDIS_CACHE:
+                cache_name = DJANGO_REDIS_CACHE_NAME or "default"
+                if import_util.find_spec("django_redis") is None:
+                    raise ModuleNotFoundError("django_redis is not installed")
+                module = import_module("django_redis")
+                cls.connection = module.get_redis_connection(cache_name)
+                logger.info(f"redis connection from django cache client. cache_name: {cache_name}")
+            else:
+                host = connection_args.get('host') or 'localhost'
+                port = connection_args.get('port') or 6379
+                password = connection_args.get('password')
+                db = connection_args.get('db') or 0
+                ssl = connection_args.get('ssl') or False
+                retry = Retry(ExponentialBackoff(cap=10, base=1), 25)
+                errors_to_retry = [ConnectionError, TimeoutError, ConnectionResetError]
+                cls.connection = StrictRedis(host, port, db, password, ssl=ssl, retry=retry,
+                                             retry_on_error=errors_to_retry, health_check_interval=20)
+                logger.info("redis connection initialized by StrictRedis")
+
+        return cls.connection
 
     def __init__(self, key, expires, timeout, client):
         super(RedisLock, self).__init__(key, expires, timeout, client)
