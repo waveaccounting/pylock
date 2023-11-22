@@ -2,7 +2,7 @@ import os
 
 from setuptools import setup, find_packages
 
-__version__ = '1.0.0-dev'
+__version__ = '1.0.1'
 
 here = os.path.abspath(os.path.dirname(__file__))
 README = open(os.path.join(here, 'README.rst')).read()
@@ -30,5 +30,8 @@ setup(
     tests_require=['Mock>=2.0.0', 'nose'],
     install_requires=[
         "redis>4.0.0",
-    ]
+    ],
+    extras_require={
+        "django-redis": ["django-redis>=5.0.0"],
+    }
 )

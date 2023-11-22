@@ -11,6 +11,8 @@ DEFAULT_BACKEND = {
     'class': 'pylock.backends.redis_lock.RedisLock',
     'connection': 'redis://'
 }
+USE_DJANGO_REDIS_CACHE = False
+DJANGO_REDIS_CACHE_NAME = "default"
 
 
 logger = logging.getLogger('pylock')
