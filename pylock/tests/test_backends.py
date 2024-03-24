@@ -211,3 +211,23 @@ class TestRedisLock(unittest.TestCase):
         self.assertEqual(connection['host'], 'master.cetus-coastguard-encrypted.f3jxme.use1.cache.amazonaws.com')
         self.assertEqual(connection['port'], 6379)
         self.assertEqual(connection['scheme'], 'rediss')
+
+    def test_parse_url_redis(self):
+        import pylock
+        from pylock.backends.redis_lock import RedisLock
+        url = 'redis://master.cetus-coastguard-encrypted.f3jxme.use1.cache.amazonaws.com:6379/0'
+        connection = pylock.parse_url(url, RedisLock.url_schemes)
+        self.assertEqual(connection['db'], '0')
+        self.assertEqual(connection['host'], 'master.cetus-coastguard-encrypted.f3jxme.use1.cache.amazonaws.com')
+        self.assertEqual(connection['port'], 6379)
+        self.assertEqual(connection['scheme'], 'redis')
+
+    def test_parse_url_hiredis(self):
+        import pylock
+        from pylock.backends.redis_lock import RedisLock
+        url = 'hiredis://cetus-coastguard-01.f3jxme.ng.0001.use1.cache.amazonaws.com:6379/0'
+        connection = pylock.parse_url(url, RedisLock.url_schemes)
+        self.assertEqual(connection['db'], '0')
+        self.assertEqual(connection['host'], 'cetus-coastguard-01.f3jxme.ng.0001.use1.cache.amazonaws.com')
+        self.assertEqual(connection['port'], 6379)
+        self.assertEqual(connection['scheme'], 'hiredis')
